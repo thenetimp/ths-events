@@ -275,8 +275,3 @@ function the_event_venue_address()
     global $event;
     echo $event->address;
 }
-
-
-
-
-
