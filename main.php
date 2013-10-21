@@ -13,6 +13,7 @@ Version: 1.0
 define("EVENTS_TABLE_EVENTS", $wpdb->prefix . 'events');
 define("EVENTS_TABLE_POSTS", $wpdb->prefix . 'posts');
 define("EVENTS_TABLE_VENUES", $wpdb->prefix . 'events_venues');
+define("EVENTS_TABLE_RESERVATION", $wpdb->prefix . 'events_reservations');
 
 require_once(dirname(__FILE__) . '/classes/EventQuery.class.php');
 require_once(dirname(__FILE__) . '/classes/EventWidget.class.php');
@@ -38,6 +39,12 @@ if(is_admin())
     // add a callback function to save any data a user enters in
     add_action('admin_menu', '\events\functions\admin_boxes');
     add_action('save_post','\events\functions\save_event');
+}
+else
+{
+    // load event script
+    wp_enqueue_script( 'script-rsvp', plugins_url() .
+        '/ths-events/js/rsvp.js', array('jquery'), '1.0.0', true );
 }
 
 function my_admin_footer() {

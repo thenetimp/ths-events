@@ -108,7 +108,6 @@ function admin_init()
     enqueue_admin_styles_and_admin_scripts();
 }
 
-
 function update_event_title($title="", $id="")
 {
     if(in_category(array('events'), $id))
@@ -228,8 +227,12 @@ function the_event_max_participants()
 
 function the_event_participant_count()
 {
+    global $wpdb;
     global $event;
-    return '0';
+
+    $result = $wpdb->get_row($wpdb->prepare('SELECT count(*) as count FROM ' . EVENTS_TABLE_RESERVATION . ' WHERE event_rsvp = true and event_date = %s and event_id= %s', $event->date_event, $event->ID));
+
+    echo $result->count;
 }
 
 function display_participants()
@@ -252,6 +255,63 @@ function display_public_price()
     return false;  
 }
 
+function toggle_user_rsvp($event_id=0, $date_event=false)
+{
+
+    if($event_id == 0 || $date_event==false)
+    {
+        echo "go away";
+        exit();
+    }
+
+    global $wpdb;
+    $wp_user = wp_get_current_user();
+    
+    // Get the status of the user RSVP
+    $rsvp_status = \events\functions\check_user_rsvp($event_id, $date_event);
+
+    // Figure out if we are updating or inserting a new record.
+    if($rsvp_status && ($rsvp_status->event_rsvp == true || $rsvp_status->event_rsvp == false))
+    {
+        $wpdb->update(EVENTS_TABLE_RESERVATION, 
+            array('event_rsvp' => (($rsvp_status->event_rsvp) ? FALSE : TRUE)),
+            array('ID' => $rsvp_status->ID)
+        );
+    }
+    else
+    {
+        $wpdb->insert(EVENTS_TABLE_RESERVATION, 
+            array(
+                'event_ID' => $event_id,
+                'user_ID' => $wp_user->ID,
+                'event_date' => $date_event,
+                'event_rsvp' => TRUE
+            )
+        );
+    }
+
+    return true;
+}
+
+function check_user_rsvp($event_id=0, $date_event=false)
+{
+    global $wpdb;
+    $wp_user = wp_get_current_user();
+    
+    $sql = $wpdb->prepare('SELECT * FROM ' . EVENTS_TABLE_RESERVATION . ' WHERE user_ID= %s AND event_ID = %s AND event_date = %s', $wp_user->ID, $event_id, $date_event);
+
+    $response = $wpdb->get_row($sql);
+    return $response;
+}
+
+function is_rsvp_for_event($event_id=0, $date_event=false)
+{
+    $response = \events\functions\check_user_rsvp($event_id, $date_event);
+
+    if ($response == "") return FALSE;
+    return $response->event_rsvp;
+}
+
 function the_event_members_price()
 {
     global $event;
@@ -270,8 +330,20 @@ function the_event_venue()
     echo $event->name;
 }
 
+function get_the_event_ID()
+{
+    global $event;
+    return $event->ID;
+}
+
 function the_event_venue_address()
 {
     global $event;
     echo $event->address;
+}
+
+function the_event_rsvp_url($event_id=0, $date_event=false)
+{
+    global $event;
+    echo plugins_url('ths-events') . '/processor.php?event_id=' . urlencode($event_id) . '&date_event=' . urlencode($date_event);
 }

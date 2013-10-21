@@ -68,14 +68,14 @@ class EventQuery {
 
         global $wpdb;
         
-        $newsql = "SELECT * FROM " . EVENTS_TABLE_EVENTS . " e, " . EVENTS_TABLE_POSTS  . " p, " . EVENTS_TABLE_VENUES . " v WHERE e.post_ID = p.ID AND e.venue_ID = v.ID AND ( e.type <> 'single' and e.startDate >=  %s and e.endDate < %s)";
-        
         $monthStartDate = date('Y-m-d', $this->monthStartTime);
         $nextMonthStartDate = date('Y-m-d', $this->nextMonthStartTime);
-        
-        $sql = $wpdb->prepare("SELECT * FROM wp_events e, wp_posts p, wp_events_venues v WHERE e.post_ID = p.ID AND e.venue_ID = v.ID AND (e.type = 'single' AND 
+
+        // get the event.
+        $sql = $wpdb->prepare("SELECT v.*,p.*,e.*,v.ID as venue_venue_id,p.ID as post_post_id FROM wp_events e, wp_posts p, wp_events_venues v WHERE e.post_ID = p.ID AND e.venue_ID = v.ID AND (e.type = 'single' AND 
 (e.date_start >= %s AND e.date_start < %s) OR (e.type <> 'single' AND (e.date_end = '00-00-00' OR e.date_end < %s )))", $monthStartDate, $nextMonthStartDate, $nextMonthStartDate);
         
+        // get the reqults from the SQL.
         $results = $wpdb->get_results($sql);
 
         foreach($results as $event)

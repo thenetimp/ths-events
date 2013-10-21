@@ -1,0 +1,4 @@
+<Files "processor.php">
+    Order Allow,Deny
+    Allow from all
+</Files>
