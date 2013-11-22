@@ -72,8 +72,7 @@ class EventQuery {
         $nextMonthStartDate = date('Y-m-d', $this->nextMonthStartTime);
 
         // get the event.
-        $sql = $wpdb->prepare("SELECT v.*,p.*,e.*,v.ID as venue_venue_id,p.ID as post_post_id FROM wp_events e, wp_posts p, wp_events_venues v WHERE e.post_ID = p.ID AND e.venue_ID = v.ID AND (e.type = 'single' AND 
-(e.date_start >= %s AND e.date_start < %s) OR (e.type <> 'single' AND (e.date_end = '00-00-00' OR e.date_end < %s )))", $monthStartDate, $nextMonthStartDate, $nextMonthStartDate);
+        $sql = $wpdb->prepare("SELECT v.*,p.*,e.*,v.ID as venue_venue_id,p.ID as post_post_id FROM wp_events e, wp_posts p, wp_events_venues v WHERE p.post_type='ths-event' and e.post_ID = p.ID AND e.venue_ID = v.ID AND (e.type = 'single' AND (e.date_start >= %s AND e.date_start < %s) OR (e.type <> 'single' AND (e.date_end = '00-00-00' OR e.date_end < %s )))", $monthStartDate, $nextMonthStartDate, $nextMonthStartDate);
         
         // get the reqults from the SQL.
         $results = $wpdb->get_results($sql);
@@ -232,14 +231,27 @@ class EventQuery {
     /**
      * Return the event at the current mark
      */
-    public function the_event()
+    public function the_event($post_id = false)
     {
         global $event;
 
-        $event = $this->events[$this->arrayKeys[$this->eventMarker++]];
+        if($post_id)
+        {
+            foreach($this->events as $eventCheck)
+            {
+                if($eventCheck->post_ID == $post_id)
+                {
+                    $event = $eventCheck;
+                }
+            }
+        }
+        else
+        {
+            $event = $this->events[$this->arrayKeys[$this->eventMarker++]];
         
-        $totalEvents = count($this->events);
-        if($this->eventMarker > $totalEvents) $this->eventMarker = $totalEvents - 1;
+            $totalEvents = count($this->events);
+            if($this->eventMarker > $totalEvents) $this->eventMarker = $totalEvents - 1;
+        }
     }
 
     /**

@@ -12,6 +12,29 @@ function register_widgets()
     register_widget('\events\classes\widgets\EventWidget');    
 }
 
+function create_event_post_type() {
+    register_post_type( 'ths-event',
+        array(
+            'labels' => array(
+                'name' => __( 'Events' ),
+                'singular_name' => __( 'Event' ),
+                'add_new_item'       =>  __('Add New Event')
+            ),
+            'supports' => array(
+                'title',
+                'editor',
+                'thumbnail',
+                'revisions'
+            ),
+            'public' => true,
+            'has_archive' => true,
+            'menu_position' => 6    
+        )
+    );
+    
+    // flush_rewrite_rules();
+}
+
 /**
  *
  * New Admin box for posts page.
@@ -23,7 +46,7 @@ function admin_boxes() {
 		'admin-event-management', // id of the <div> we'll add
 		'Event Details', //title
 		'\events\functions\event_meta_view', // callback function that will echo the box content
-		'post', // where to add the box: on "post", "page", or "link" page
+		'ths-event', // where to add the box: on "post", "page", or "link" page
 		'side', // put it in the side bar
 		'low' // put it high on the page.
 	);
@@ -51,9 +74,9 @@ function save_event()
 {
     global $wpdb;
 
-    if(isset($_POST['post_category']) && in_array(4, $_POST['post_category']))
-    {
 
+    if(isset($_POST['post_type']) && $_POST['post_type'] == 'ths-event')
+    {
         // check if the post is attached to an event.
         $result = $wpdb->get_row($wpdb->prepare("SELECT count(*) as count FROM " . EVENTS_TABLE_EVENTS . " WHERE post_ID = %s", $_POST['post_ID']));
 
@@ -68,9 +91,9 @@ function save_event()
                 'date_end' => $_POST['date_end'],
                 'time_end' => $_POST['time_end'],
                 'members_only_event' => $_POST['members_only_event'],
-                'max_participants' => $_POST['max_participants'],
-                'members_price' => $_POST['members_price'],
-                'public_price' => $_POST['public_price']
+                'max_participants' => (isset($_POST['max_participants']) && $_POST['max_participants'] != "") ? $_POST['max_participants'] : 0,
+                'members_price' => (isset($_POST['members_price']) && $_POST['members_price'] != "") ? $_POST['members_price'] : 0,
+                'public_price' => (isset($_POST['public_price']) && $_POST['public_price'] != "") ? $_POST['public_price'] : 0
             );
 
             $wpdb->update(EVENTS_TABLE_EVENTS, $data, array(
@@ -79,7 +102,6 @@ function save_event()
         }
         else
         {
-
           $result =   $wpdb->insert(EVENTS_TABLE_EVENTS, array(
                 'post_ID' => $_POST['post_ID'],
                 'venue_ID' => 1,  //$_POST['event_venue'],
@@ -89,9 +111,10 @@ function save_event()
                 'date_end' => $_POST['date_end'],
                 'time_end' => $_POST['time_end'],
                 'members_only_event' => $_POST['members_only_event'],
-                'max_participants' => $_POST['max_participants'],
-                'members_price' => $_POST['members_price'],
-                'public_price' => $_POST['public_price']
+                'max_participants' => (isset($_POST['max_participants']) && $_POST['max_participants'] != "") ? $_POST['max_participants'] : 0,
+                'members_price' => (isset($_POST['members_price']) && $_POST['members_price'] != "") ? $_POST['members_price'] : 0,
+                'public_price' => (isset($_POST['public_price']) && $_POST['public_price'] != "") ? $_POST['public_price'] : 0,
+                'created_at' => date('Y-m-d H:i:s')
             ));
         }
     }
@@ -168,11 +191,11 @@ function have_events()
     return $eventQuery->have_events();
 }
 
-function the_event()
+function the_event($post_ID = false)
 {
     global $eventQuery;
     
-    return $eventQuery->the_event();
+    return $eventQuery->the_event($post_ID);
 }
 
 function rewind_event($mark)
@@ -212,6 +235,7 @@ function the_event_start_datetime($delimiter = " ")
 // {
 //     
 // }
+
 
 function the_event_end_time()
 {
@@ -271,24 +295,33 @@ function display_public_price()
 
 function toggle_user_rsvp($event_id=0, $date_event=false)
 {
+    global $wpdb;
+
+    $wp_user = wp_get_current_user();
 
     if($event_id == 0 || $date_event==false)
     {
         echo "go away";
         exit();
     }
-
-    global $wpdb;
-    $wp_user = wp_get_current_user();
+    
+    if(!$wp_user)
+    {
+        echo "go away";
+        exit();
+    }
     
     // Get the status of the user RSVP
     $rsvp_status = \events\functions\check_user_rsvp($event_id, $date_event);
 
+    $wpdb->show_errors();
+
     // Figure out if we are updating or inserting a new record.
     if($rsvp_status && ($rsvp_status->event_rsvp == true || $rsvp_status->event_rsvp == false))
     {
+        $wpdb->show_errors();
         $wpdb->update(EVENTS_TABLE_RESERVATION, 
-            array('event_rsvp' => (($rsvp_status->event_rsvp) ? FALSE : TRUE)),
+            array('event_rsvp' => (($rsvp_status->event_rsvp) ? 0 : 1)),
             array('ID' => $rsvp_status->ID)
         );
     }

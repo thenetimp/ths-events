@@ -32,7 +32,8 @@ add_image_size( 'thumb-event-widget', 155, 190);
 add_filter('the_title', '\events\functions\update_event_title', 10, 2);
 add_action('admin_init', '\events\functions\admin_init');
 add_action('admin_footer', 'my_admin_footer');
-add_action( 'widgets_init', '\events\functions\register_widgets' ); 
+add_action('widgets_init', '\events\functions\register_widgets' ); 
+add_action('init', '\events\functions\create_event_post_type' );
 
 if(is_admin())
 {
