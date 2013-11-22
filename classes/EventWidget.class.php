@@ -60,6 +60,7 @@ class EventWidget extends \WP_Widget {
 
         foreach($events as $event)
         {
+
             echo '<div class="col-md-3">';
             echo '<div class="thumbnail event">';
 
@@ -71,7 +72,7 @@ class EventWidget extends \WP_Widget {
             }
 
             echo '<div class="caption">';
-            echo '<h3 class="event-name"><a href="#">' . $event->post_title . '</a></h3>';
+            echo '<h3 class="event-name"><a href="'. get_permalink( $event->post_ID ) . '">' . $event->post_title . '</a></h3>';
             echo $event->date_event . ' ' . substr($event->time_start, 0,5);
             echo '</div>';
             echo '</div>';

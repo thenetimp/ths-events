@@ -50,13 +50,16 @@ function event_meta_view()
 function save_event()
 {
     global $wpdb;
-    
+
     if(isset($_POST['post_category']) && in_array(4, $_POST['post_category']))
     {
-        $wpdb->show_errors();
-        
-        if($_POST['action'] == 'editpost')
+
+        // check if the post is attached to an event.
+        $result = $wpdb->get_row($wpdb->prepare("SELECT count(*) as count FROM " . EVENTS_TABLE_EVENTS . " WHERE post_ID = %s", $_POST['post_ID']));
+
+        if($result->count == 1)
         {
+
             $data = array(
                 'venue_ID' => 1, //$_POST['event_venue'],
                 'type' => $_POST['event_type'],
@@ -76,7 +79,8 @@ function save_event()
         }
         else
         {
-            $wpdb->insert(EVENTS_TABLE_EVENTS, array(
+
+          $result =   $wpdb->insert(EVENTS_TABLE_EVENTS, array(
                 'post_ID' => $_POST['post_ID'],
                 'venue_ID' => 1,  //$_POST['event_venue'],
                 'type' => $_POST['event_type'],
@@ -86,7 +90,7 @@ function save_event()
                 'time_end' => $_POST['time_end'],
                 'members_only_event' => $_POST['members_only_event'],
                 'max_participants' => $_POST['max_participants'],
-                'member_price' => $_POST['member_price'],
+                'members_price' => $_POST['members_price'],
                 'public_price' => $_POST['public_price']
             ));
         }
@@ -198,6 +202,16 @@ function the_event_start_datetime($delimiter = " ")
     // Return the datetime
     echo $datetime;
 }
+
+// function the_event_excerpt()
+// {
+//     echo apply_filters('the_event_excerpt', get_the_event_excerpt());    
+// }
+// 
+// function get_the_event_excerpt()
+// {
+//     
+// }
 
 function the_event_end_time()
 {
